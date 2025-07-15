@@ -11,16 +11,16 @@ export interface User {
 export interface Poll {
   id: string;
   question: string;
-  email: string;
   options: string[];
   settings?: {
     allowMultiple: boolean;
-    showResultsBeforeVoting: boolean;
+    showResults: boolean;
     allowVoteChange?: boolean;
   };
   created_by: string;
   created_at: string;
   ends_at?: string | null;
+  email?: string | null;
 }
 
 export interface Vote {

@@ -352,7 +352,7 @@ const PoolView = ({ user }: { user?: User }) => {
               </motion.div>
             </div>
             {/* Results */}
-            {poll.settings.showResults && (
+            {poll.settings?.showResults && (
               <div className="lg:col-span-1">
                 <motion.div
                   initial={{ opacity: 0, x: 20 }}

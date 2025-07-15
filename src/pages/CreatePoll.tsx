@@ -6,13 +6,22 @@ import toast from "react-hot-toast";
 import { supabase } from "../lib/supabaseClient";
 import type { User } from "../utilities/types";
 import { FaPlus, FaVoteYea } from "react-icons/fa";
-import { FaDeleteLeft } from "react-icons/fa6";
 
 //  Generate random IP hash for tracking
 const generateIPHash = () => {
   return (
     "anon_" + Math.random().toString(36).substr(2, 9) + Date.now().toString(36)
   );
+};
+
+type PollForm = {
+  question: string;
+  options: string[];
+  settings: {
+    allowMultiple: boolean;
+    showResults: boolean;
+  };
+  ends_at: string;
 };
 
 const CreatePoll = ({ user }: { user?: User }) => {
@@ -23,9 +32,8 @@ const CreatePoll = ({ user }: { user?: User }) => {
     control,
     handleSubmit,
     formState: { errors },
-    watch,
     reset,
-  } = useForm({
+  } = useForm<PollForm>({
     defaultValues: {
       question: "",
       options: ["", ""],
@@ -36,12 +44,12 @@ const CreatePoll = ({ user }: { user?: User }) => {
       ends_at: "",
     },
   });
-  const { fields, append, remove } = useFieldArray({
+  const { fields, append, remove } = useFieldArray<PollForm>({
     control,
     name: "options",
   });
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: PollForm) => {
     const validOptions = data.options.filter((opt: string) => opt.trim());
     if (validOptions.length < 2) {
       toast.error("Please provide at least 2 options");
@@ -104,7 +112,7 @@ const CreatePoll = ({ user }: { user?: User }) => {
         >
           <div className="bg-white rounded-xl shadow-md p-8 border border-gray-200 ">
             <div className="mb-6">
-              <div className="flex items-center gap-2 text-2xl font-bold text-blue-600 dark:text-blue-400">
+              <div className="flex items-center gap-2 text-2xl font-bold text-blue-600 ">
                 <FaVoteYea className="h-6 w-6" /> Create New Poll
               </div>
               {!user && (
@@ -128,7 +136,7 @@ const CreatePoll = ({ user }: { user?: User }) => {
                     },
                   })}
                   placeholder="What would you like to ask?"
-                  className="mt-1 w-full border p-3 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="mt-1 w-full border p-3 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 "
                 />
                 {errors.question && (
                   <p className="text-red-500 text-sm mt-1">
@@ -153,10 +161,10 @@ const CreatePoll = ({ user }: { user?: User }) => {
                       {fields.length > 2 && (
                         <button
                           type="button"
-                          className="bg-gray-200  text-gray-800 rounded p-2 hover:bg-gray-300 "
+                          className="bg-gray-200 text-gray-800 rounded p-2 hover:bg-gray-300 "
                           onClick={() => removeOption(index)}
                         >
-                          <FaDeleteLeft className="h-4 w-4" />
+                          Remove
                         </button>
                       )}
                     </div>
@@ -164,7 +172,7 @@ const CreatePoll = ({ user }: { user?: User }) => {
                   {fields.length < 10 && (
                     <button
                       type="button"
-                      className="w-full flex items-center justify-center gap-2 bg-blue-100 text-blue-700 rounded cursor-pointer p-2 mt-2 hover:bg-blue-200 "
+                      className="w-full flex items-center justify-center gap-2 bg-blue-100 text-blue-700 rounded p-2 mt-2 hover:bg-blue-200 "
                       onClick={addOption}
                     >
                       <FaPlus className="h-4 w-4" /> Add Option
@@ -218,7 +226,7 @@ const CreatePoll = ({ user }: { user?: User }) => {
               {/* Submit */}
               <button
                 type="submit"
-                className="w-full bg-gray-800 hover:bg-gray-900 text-white py-1.5 cursor-pointer rounded-lg font-semibold text-lg transition disabled:opacity-60"
+                className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white py-3 rounded-lg font-semibold text-lg transition disabled:opacity-60"
                 disabled={loading}
               >
                 {loading ? "Creating Poll..." : "Create Poll"}

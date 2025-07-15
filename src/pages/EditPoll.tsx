@@ -4,13 +4,24 @@ import { useForm, useFieldArray } from "react-hook-form";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
 import { supabase } from "../lib/supabaseClient";
-import type { User } from "../utilities/types";
-import { FaBackspace, FaPlus, FaVoteYea } from "react-icons/fa";
+import { FaPlus, FaVoteYea } from "react-icons/fa";
+import { FaDeleteLeft } from "react-icons/fa6";
 
-const EditPoll = ({ user }: { user?: User }) => {
+type PollForm = {
+  question: string;
+  options: string[];
+  settings: {
+    allowMultiple: boolean;
+    showResults: boolean;
+  };
+  ends_at: string;
+};
+
+const EditPoll = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const {
     register,
@@ -18,7 +29,7 @@ const EditPoll = ({ user }: { user?: User }) => {
     handleSubmit,
     formState: { errors },
     reset,
-  } = useForm({
+  } = useForm<PollForm>({
     defaultValues: {
       question: "",
       options: ["", ""],
@@ -29,7 +40,7 @@ const EditPoll = ({ user }: { user?: User }) => {
       ends_at: "",
     },
   });
-  const { fields, append, remove } = useFieldArray({
+  const { fields, append, remove } = useFieldArray<PollForm>({
     control,
     name: "options",
   });
@@ -57,7 +68,7 @@ const EditPoll = ({ user }: { user?: User }) => {
     fetchPoll();
   }, [id, reset, navigate]);
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: PollForm) => {
     const validOptions = data.options.filter((opt: string) => opt.trim());
     if (validOptions.length < 2) {
       toast.error("Please provide at least 2 options");
@@ -96,6 +107,21 @@ const EditPoll = ({ user }: { user?: User }) => {
     }
   };
 
+  const handleDelete = async () => {
+    setLoading(true);
+    try {
+      const { error } = await supabase.from("polls").delete().eq("id", id);
+      if (error) throw error;
+      toast.success("Poll deleted!");
+      navigate("/mypolls");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to delete poll");
+    } finally {
+      setLoading(false);
+      setShowDeleteModal(false);
+    }
+  };
+
   if (loading) return <div>Loading...</div>;
 
   return (
@@ -114,11 +140,11 @@ const EditPoll = ({ user }: { user?: User }) => {
               </div>
               <button
                 type="button"
-                className="flex items-center gap-2 cursor-pointer px-4 py-2 bg-green-100 text-green-700 rounded hover:bg-green-200 transition"
-                onClick={() => navigate(-1)}
+                className="flex items-center gap-2 px-4 py-2 bg-red-100 text-red-700 rounded hover:bg-red-200 transition"
+                onClick={() => setShowDeleteModal(true)}
                 disabled={loading}
               >
-                <FaBackspace className="h-5 w-5" /> Back
+                <FaDeleteLeft className="h-5 w-5" /> Delete
               </button>
             </div>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -172,7 +198,7 @@ const EditPoll = ({ user }: { user?: User }) => {
                   {fields.length < 10 && (
                     <button
                       type="button"
-                      className="w-full flex items-center justify-center gap-2 cursor-pointer bg-blue-100 text-blue-700 rounded p-2 mt-2 hover:bg-blue-200 "
+                      className="w-full flex items-center justify-center gap-2 bg-blue-100 text-blue-700 rounded p-2 mt-2 hover:bg-blue-200 "
                       onClick={addOption}
                     >
                       <FaPlus className="h-4 w-4" /> Add Option
@@ -226,7 +252,7 @@ const EditPoll = ({ user }: { user?: User }) => {
               {/* Submit */}
               <button
                 type="submit"
-                className="w-full bg-gray-800 hover:bg-gray-900 text-white py-2 cursor-pointer rounded-lg font-semibold text-lg transition disabled:opacity-60"
+                className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white py-3 rounded-lg font-semibold text-lg transition disabled:opacity-60"
                 disabled={loading}
               >
                 {loading ? "Updating Poll..." : "Update Poll"}
@@ -234,6 +260,36 @@ const EditPoll = ({ user }: { user?: User }) => {
             </form>
           </div>
         </motion.div>
+        {/* Delete Modal */}
+        {showDeleteModal && (
+          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+            <div className="bg-white rounded-xl p-8 shadow-xl max-w-sm w-full">
+              <h2 className="text-xl font-bold mb-4 text-red-600">
+                Delete Poll
+              </h2>
+              <p className="mb-6">
+                Are you sure you want to delete this poll? This action cannot be
+                undone.
+              </p>
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={() => setShowDeleteModal(false)}
+                  className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+                  disabled={loading}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDelete}
+                  className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+                  disabled={loading}
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

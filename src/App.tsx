@@ -65,7 +65,7 @@ function App() {
         />
         <Route
           path="/edit/:id"
-          element={user ? <EditPoll user={user} /> : <Navigate to="/login" />}
+          element={user ? <EditPoll /> : <Navigate to="/login" />}
         />
       </Routes>
     </BrowserRouter>
